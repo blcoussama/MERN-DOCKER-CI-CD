@@ -3,22 +3,24 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getRecruiterCompanies } from '../store/companySlice';
 import CompanyCard from '../components/CompanyCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 
-const RecruiterCompanies = () => {
+const SelectCompanyForJob = () => {
   const dispatch = useDispatch();
-  const { companies, isLoading, error } = useSelector((state) => state.company);
+  const navigate = useNavigate();
   const { recruiterId } = useParams();
-  const { user } = useSelector((state) => state.auth);
-
-  // Determine if the current user is the owner of the companies (i.e., the recruiter whose ID is in the URL)
-  const isOwner = user?.role === 'recruiter' && user?._id === recruiterId;
+  const { companies, isLoading, error } = useSelector((state) => state.company);
 
   useEffect(() => {
     if (recruiterId) {
       dispatch(getRecruiterCompanies(recruiterId));
     }
   }, [dispatch, recruiterId]);
+
+  const handleCompanySelect = (companyId) => {
+    // Navigate to the PostJob page with the selected companyId in the URL
+    navigate(`/post-job/${companyId}`);
+  };
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -28,20 +30,24 @@ const RecruiterCompanies = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="bg-white text-gray-900 rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold mb-4">
-          {isOwner ? 'Your Companies' : 'Registered Companies'}
+          Select a Company for Posting a New Job
         </h2>
         {error && <p className="text-red-500">{error}</p>}
         {companies && companies.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {companies.map((company) => (
-              <CompanyCard key={company._id} company={company} />
+              <div
+                key={company._id}
+                className="cursor-pointer"
+                onClick={() => handleCompanySelect(company._id)}
+              >
+                <CompanyCard company={company} />
+              </div>
             ))}
           </div>
         ) : (
           <p>
-            {isOwner
-              ? "You haven't registered any companies yet."
-              : "This recruiter hasn't registered any companies yet."}
+            {`You haven't registered any companies yet. Please register a company first.`}
           </p>
         )}
       </div>
@@ -49,4 +55,4 @@ const RecruiterCompanies = () => {
   );
 };
 
-export default RecruiterCompanies;
+export default SelectCompanyForJob;
